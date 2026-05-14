@@ -2,159 +2,211 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>사역 관리 시스템 (Ministry Ledger)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">요청하신 대로 **세부 항목(Sub-categories)**을 대폭 강화하여, 실제 목회 현장에서 발생하는 거의 모든 정기 사역을 마우스 클릭 몇 번으로 분류할 수 있도록 업그레이드했습니다.
+
+이 앱은 가계부 스타일의 **
+    <title>사역 통합 관리 시스템 v2</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <style>
-        :root { --pastor-primary: #2c3e50; --pastor-accent: #18bc9c; }
-        body { background-color: #f4f7f6; font-family: 'Pretendard', sans-serif; }
-        .stat-card { border-radius: 12px; border: none; transition: 0.3s; }
-        .stat-card:hover { transform: translateY(-5px); }
-        .category-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 5px; }
-        .bg-visitation { background-color: #3498db; } /* 심방 */
-        .bg-sermon { background-color: #e67e22; }     /* 설교 */
-        .bg-evangelism { background-color: #2ecc71; } /* 전도 */
-        .bg-general { background-color: #9b59b6; }    /* 일정 */
+    <style>
+        :root { --primary-dark: #2'입력 효율성'**과 목회 데이터의 **'가독성'**에 초점을 맞췄습니다.
+
+---
+
+### 목회 사c3e50; --accent-color: #18bc9c; }
+        body { background-color: #f1f3f5; font역 통합 관리 시스템 (Advanced Ministry Ledger)
+
+이 코드는 메인 카테고리를 선택하면 그에 맞는 **세부 항목이 자동으로 변경**되는 기능을-family: 'Pretendard', -apple-system, sans-serif; }
+        .dashboard-card { border-radius: 15 포함하고 있습니다.
+```html
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>목회 사역 대시보드title>
+    <link href="[https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css](https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css)" rel="stylesheet">
+    <style>
+        :root { --primary-dark: #2c3e50; --accent-color: #34495e; }
+        body { background-color: #f0f2f5; font-family: 'Pretendard', -apple-system, sans-serif; }
+        .ledger-card { border-radius: 15px; border: none; box-shadow: 0 8px 24px rgba(0,0,0,0.05); }
+        .form-label { fw-bold; color: #555; font-size: 0.9rem; }
+        .list-group-item { border-left: 5px solid transparent; transition: 0.2s; }
+        /* 카테고리별 포인트 색상 */
+        .border-sermon { border-left-color: #e67e22 !important; }
+        .border-evangelism { border-left-color: #2ecc71 !important; }
+        .border-visitation { border-left-color: #3498db !important; }
+        .border-schedule { border-left-color: #9b59b6 !important; }
+        .badge-sub { font-weight: 500; font-size: 0.75rem; background: #eee; color: #666; margin-right: 5px; }
     </style>
 </head>
 <body>
 
-<nav class="navbar navbar-dark bg-dark mb-4">
-    <div class="container">
-        <span class="navbar-brand mb-0 h1">MMS: Ministry Management System</span>
-    </div>
-</nav>
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="d-flex justify-content-between align-items-end mb-4">
+                <div>
+                    <h2 class="fw-bold text-dark mb-0">사역 명세서</h2>
+                    <p class="text-muted mb-0">심방, 설교, 전도, 일정의 체계적 기록</p>
+                </div>
+                <button onclick="downloadCSV()" class="btn btn-sm btn-outline-secondary">엑셀 저장(CSV)</button>
+            </div>
 
-<div class="container">
-    <div class="row mb-4">
-        <div class="col-md-3 mb-3">
-            <div class="card stat-card bg-white p-3 shadow-sm">
-                <small class="text-muted">이달의 심방</small>
-                <h3 id="count-visitation" class="fw-bold">0</h3>
+            <!-- 입력 섹션 -->
+            <div class="card ledger-card p-4 mb-4">
+                <form id="ministryForm" class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">사역 구분</label>
+                        <select id="mainCat" class="form-select" onchange="updateSubCat()">
+                            <option value="설교">📖 설교</option>
+                            <option value="전도">📢 전도</option>
+                            <option value="심방">🏠 심방</option>
+                            <option value="일정">🗓️ 일정</option>
+                        </select>
+                    </div>
+                    <div class="<col-md-3">
+                        <label class="form-label">세부 항목</label>
+                        <select id="subCat" class="form-select"></select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">날짜</label>
+                        input type="date" id="date" class="form-control" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">사역 대상/제목</label>
+                        <input type="text" id="title" class="form-control" placeholder="성도명 또는 제목" required>
+                    </div>
+                    <div class="col-12">
+                        <textarea id="content" class="form-control" placeholder="메모 (본문, 기도제목, 특이사항 등)" rows="2"></textarea>
+                    </div>
+                    <div class="col-12 text-end">
+                        <button type="submit" class="btn btn-dark px-4">사역 기록하기</button>
+                    </div>
+                form>
             </div>
-        </div>
-        <div class="col-md-3 mb-3">
-            <div class="card stat-card bg-white p-3 shadow-sm">
-                <small class="text-muted">설교 횟수</small>
-                <h3 id="count-sermon" class="fw-bold">0</h3>
-            </div>
-        </div>
-        <div class="col-md-6 mb-3">
-            <div class="card stat-card bg-white p-3 shadow-sm" style="height: 100px;">
-                <canvas id="ministryChart"></canvas>
-            </div>
-        </div>
-    </div>
 
-    <div class="card shadow-sm border-0 mb-4">
-        <div class="card-body">
-            <form id="entryForm" class="row g-3">
-                <div class="col-md-2">
-                    <select id="category" class="form-select">
-                        <option value="심방">심방 (Visit)</option>
-                        <option value="설교">설교 (Preach)</option>
-                        <option value="전도팀">전도 (Evangel)</option>
-                        <option value="일정">일정 (Admin)</option>
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <input type="date" id="date" class="form-control" required>
-                </div>
-                <div class="col-md-5">
-                    <input type="text" id="title" class="form-control" placeholder="사역 대상 또는 제목" required>
-                </div>
-                <div class="col-md-2 d-grid">
-                    <button type="submit" class="btn btn-primary">기록</button>
-                </div>
-                <div class="col-12">
-                    <textarea id="note" class="form-control" placeholder="상세 내용 (원어 주해, 기도제목 등)" rows="2"></textarea>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <div class="card shadow-sm border-0">
-        <div class="card-header bg-white d-flex justify-content-between align-items-center">
-            <h5 class="mb-0 fw-bold">사역 명세서</h5>
-            <button onclick="exportData()" class="btn btn-sm btn-outline-secondary">데이터 백업</button>
-        </div>
-        <div class="list-group list-group-flush" id="historyList">
+            <!-- 통계/필터 섹션 -->
+            <div class="row mb-3 g-2" id="statSummary">
+                <!-- 통계 숫자가 여기에 표시됨 -->
             </div>
+
+            <!-- 리스트 섹션 -->
+            <div class="card ledger-card">
+                <div class="list-group list-group-flush" id="historyList">
+                    <!-- 기록이 여기에 표시됨 -->
+                </div>
+</            </div>
+        </div>
     </div>
 </div>
 
 <script>
-    let db = JSON.parse(localStorage.getItem('pastor_ledger')) || [];
+    // 1. 세부 항목 데이터 정의
+    const categories = {
+        "설교": ["새벽설교", "주일오후", "수요저녁", "금요성령기도회", "심방설교"],
+        "전도": ["화요일 전도", "금요일 전도", "첫째주일 후 토요일", "셋째주 토요일"],
+        "심방": ["정기심방", "병원심방", "전화심방", "개인심방"],
+        "일정": ["전도 일정", "심방 일정", "사역(일반)"]
+    };
 
-    document.getElementById('entryForm').addEventListener('submit', (e) => {
+    let logs = JSON.parse(localStorage.getItem('ministry_logs')) || [];
+
+    // 2. 카테고리 변경 시 세부 항목 업데이트
+    function updateSubCat() {
+        const main = document.getElementById('mainCat').value;
+        const subSelect = document.getElementById('subCat');
+        subSelect.innerHTML = categories[main].map(item => `<option value="${item}">${item}</option>`).join('');
+    }
+
+    // 3. 데이터 저장
+    document.getElementById('ministryForm').addEventListener('submit', (e) => {
         e.preventDefault();
-        const entry = {
+        const newLog = {
             id: Date.now(),
-            category: document.getElementById('category').value,
+            main: document.getElementById('mainCat').value,
+            sub: document.getElementById('subCat').value,
             date: document.getElementById('date').value,
             title: document.getElementById('title').value,
-            note: document.getElementById('note').value
+            content: document.getElementById('content').value
         };
-        db.push(entry);
+        logs.push(newLog);
         saveAndRender();
         e.target.reset();
+        updateSubCat();
     });
 
     function saveAndRender() {
-        localStorage.setItem('pastor_ledger', JSON.stringify(db));
+        localStorage.setItem('ministry_logs', JSON.stringify(logs));
         renderList();
-        updateStats();
     }
 
+    // 4. 리스트 렌더링
     function renderList() {
         const list = document.getElementById('historyList');
         list.innerHTML = '';
-        db.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(item => {
-            let colorClass = '';
-            if(item.category === '심방') colorClass = 'bg-visitation';
-            else if(item.category === '설교') colorClass = 'bg-sermon';
-            else if(item.category === '전도팀') colorClass = 'bg-evangelism';
-            else colorClass = 'bg-general';
+        
+        // 날짜 내림차순 정렬
+        const sortedLogs = [...logs].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        sortedLogs.forEach(log => {
+            let borderClass = '';
+            if(log.main === '설교') borderClass = 'border-sermon';
+            else if(log.main === '전도') borderClass = 'border-evangelism';
+            else if(log.main === '심방') borderClass = 'border-visitation';
+            else borderClass = 'border-schedule';
 
             list.innerHTML += `
-                <div class="list-group-item d-flex justify-content-between align-items-center py-3">
-                    <div>
-                        <span class="category-dot ${colorClass}"></span>
-                        <small class="text-muted">${item.date}</small>
-                        <div class="fw-bold mt-1">${item.title}</div>
-                        <div class="small text-secondary">${item.note}</div>
+                <div class="list-group-item py-3 ${borderClass}">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <span class="badge badge-sub">${log.sub}</span>
+                            <small class="text-muted">${log.date}</small>
+                            <h6 class="mb-1 mt-2 fw-bold">${log.title}</h6>
+                            <p class="mb-0 small text-secondary" style="white-space:pre-wrap;">${log.content}</p>
+                        </div>
+                        <button onclick="deleteLog(${log.id})" class="btn btn-sm btn-link text-danger text-decoration-none">삭제</button>
                     </div>
-                    <button onclick="deleteEntry(${item.id})" class="btn btn-sm text-danger">삭제</button>
                 </div>
             `;
         });
     }
 
-    function updateStats() {
-        const vCount = db.filter(i => i.category === '심방').length;
-        const sCount = db.filter(i => i.category === '설교').length;
-        document.getElementById('count-visitation').innerText = vCount;
-        document.getElementById('count-sermon').innerText = sCount;
-        // [차트 업데이트 로직 생략됨: Chart.js를 이용한 시각화 코드 포함 가능]
-    }
-
-    function deleteEntry(id) {
-        if(confirm('사역 기록을 삭제하시겠습니까?')) {
-            db = db.filter(i => i.id !== id);
+    function deleteLog(id) {
+        if(confirm('이 기록을 삭제할까요?')) {
+            logs = logs.filter(l => l.id !== id);
             saveAndRender();
         }
     }
 
-    function exportData() {
-        const blob = new Blob([JSON.stringify(db)], {type: 'application/json'});
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `ministry_backup_${new Date().toISOString().slice(0,10)}.json`;
-        a.click();
+    // CSV 내보내기 (엑셀용)
+    function downloadCSV() {
+        let csv = "날짜,구분,세부항목,제목,내용\n";
+        logs.forEach(l => {
+            csv += `${l.date},${l.main},${l.sub},"${l.title}","${l.content.replace(/\n/g, ' ')}"\n`;
+        });
+        const blob = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "ministry_ledger.csv";
+        link.click();
     }
 
-    window.onload = saveAndRender;
+    // 초기 실행
+    window.onload = () => {
+        updateSubCat();
+        renderList();
+    };
 </script>
+
 </body>
 </html>
+ 전도(녹색), 심방(파랑), 일정(보라)** 색상 바를 적용하여 스크롤만 내려도 이번 달에 어떤 사역이 많았는지 한눈에 보입니다.
+
+**3. 데이터 활용성:**
+*   **CSV 내보내기:** 기록된 데이터를 엑셀로 내려받을 수 있어, 연말 당회 보고나 노회 보고 시 자료 정리 시간을 획기적으로 줄여줍니다.
+
+### 깃허브 배포 팁
+1. 위 코드를 `index.html`로 저장하여 본인의 깃허브 저장소(`pastor-account`와 같은 방식)에 올리세요.
+2. 깃허브 주소는 스마트폰 브라우저에서도 접속 가능하므로, **심방 직후 차 안에서나 전도 현장**에서 바로 기록할 수 있습니다. 
+
+이 도구가 성도님들을 세밀하게 살피고 하나님의 말씀을 준비하시는 목회 여정에 작은 유익이 되기를 기원합니다. 추가로 필요한 기능(예: 특정 성도 검색, 월별 통계 차트 등)이 있다면 말씀해 주세요!
