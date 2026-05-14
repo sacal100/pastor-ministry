@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>목회 사역 대시보드</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root { --primary-dark: #2c3e50; --accent-color: #34495e; }
+        body { background-color: #f0f2f5; font-family: 'Pretendard', -apple-system, sans-serif; }
+        .ledger-card { border-radius: 15px; border: none; box-shadow: 0 8px 24px rgba(0,0,0,0.05); }
+        .form-label { fw-bold; color: #555; font-size: 0.9rem; }
+        .list-group-item { border-left: 5px solid transparent; transition: 0.2s; }
+        .border-sermon { border-left-color: #e67e22 !important; }
+        .border-evangelism { border-left-color: #2ecc71 !important; }
+        .border-visitation { border-left-color: #3498db !important; }
+        .border-schedule { border-left-color: #9b59b6 !important; }
+        .badge-sub { font-weight: 500; font-size: 0.75rem; background: #eee; color: #666; margin-right: 5px; }
+    </style>
+</head>
+<body>
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="d-flex justify-content-between align-items-end mb-4">
+                <div>
+                    <h2 class="fw-bold text-dark mb-0">사역 명세서</h2>
+                    <p class="text-muted mb-0">심방, 설교, 전도, 일정의 체계적 기록</p>
+                </div>
+                <button onclick="downloadCSV()" class="btn btn-sm btn-outline-secondary">엑셀 저장(CSV)</button>
+            </div>
+
+            <!-- 입력 섹션 -->
+            <div class="card ledger-card p-4 mb-4">
+                <form id="ministryForm" class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">사역 구분</label>
+                        <select id="mainCat" class="form-select" onchange="updateSubCat()">
+                            <option value="설교">📖 설교</option>
+                            <option value="전도">📢 전도</option>
+                            <option value="심방">🏠 심방</option>
+                            <option value="일정">🗓️ 일정</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">세부 항목</label>
+                        <select id="subCat" class="form-select"></select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">날짜</label>
+                        <input type="date" id="date" class="form-control" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">사역 대상/제목</label>
+                        <input type="text" id="title" class="form-control" placeholder="성도명 또는 제목" required>
+                    </div>
+                    <div class="col-12">
+                        <textarea id="content" class="form-control" placeholder="메모 (본문, 기도제목, 특이사항 등)" rows="2"></textarea>
+                    </div>
+                    <div class="col-12 text-end">
+                        <button type="submit" class="btn btn-dark px-4">사역 기록하기</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- 리스트 섹션 -->
+            <div class="card ledger-card">
+                <div class="list-group list-group-flush" id="historyList">
+                    <!-- 기록이 여기에 표시됨 -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 1. 세부 항목 데이터 정의 (목장 추가됨)
+    const categories = {
+        "설교": ["새벽설교", "주일오후", "수요저녁", "금요성령기도회", "심방설교"],
+        "전도": ["화요일 전도", "금요일 전도", "첫째주일 후 토요일", "셋째주 토요일"],
+        "심방": [
+            "정기심방", "병원심방", "전화심방", "개인심방",
+            "201목장", "202목장", "203목장", "204목장", "205목장",
+            "206목장", "207목장", "208목장", "209목장", "210목장",
+            "211목장", "212목장", "213목장", "214목장", "215목장",
+            "216목장", "217목장", "218목장", "219목장", "220목장"
+        ],
+        "일정": ["전도 일정", "심방 일정", "사역(일반)"]
+    };
+
+    let logs = JSON.parse(localStorage.getItem('ministry_logs')) || [];
+
+    // 날짜에서 요일을 한글로 반환하는 함수
+    function getKoreanDay(dateString) {
+        const days = ['일', '월', '화', '수', '목', '금', '토'];
+        const date = new Date(dateString);
+        return days[date.getDay()];
+    }
+
+    // 카테고리 변경 시 세부 항목 업데이트
+    function updateSubCat() {
+        const main = document.getElementById('mainCat').value;
+        const subSelect = document.getElementById('subCat');
+        subSelect.innerHTML = categories[main].map(item => `<option value="${item}">${item}</option>`).join('');
+    }
+
+    // 데이터 저장
+    document.getElementById('ministryForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const newLog = {
+            id: Date.now(),
+            main: document.getElementById('mainCat').value,
+            sub: document.getElementById('subCat').value,
+            date: document.getElementById('date').value,
+            title: document.getElementById('title').value,
+            content: document.getElementById('content').value
+        };
+        logs.push(newLog);
+        saveAndRender();
+        e.target.reset();
+        updateSubCat();
+    });
+
+    function saveAndRender() {
+        localStorage.setItem('ministry_logs', JSON.stringify(logs));
+        renderList();
+    }
+
+    // 리스트 렌더링 (요일 표시 추가)
+    function renderList() {
+        const list = document.getElementById('historyList');
+        list.innerHTML = '';
+        
+        // 날짜 내림차순 정렬
+        const sortedLogs = [...logs].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        sortedLogs.forEach(log => {
+            let borderClass = '';
+            if(log.main === '설교') borderClass = 'border-sermon';
+            else if(log.main === '전도') borderClass = 'border-evangelism';
+            else if(log.main === '심방') borderClass = 'border-visitation';
+            else borderClass = 'border-schedule';
+
+            // 요일 구하기
+            const dayOfWeek = getKoreanDay(log.date);
+
+            list.innerHTML += `
+                <div class="list-group-item py-3 ${borderClass}">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <span class="badge badge-sub">${log.sub}</span>
+                            <small class="text-muted fw-bold">${log.date} (${dayOfWeek})</small>
+                            <h6 class="mb-1 mt-2 fw-bold">${log.title}</h6>
+                            <p class="mb-0 small text-secondary" style="white-space:pre-wrap;">${log.content}</p>
+                        </div>
+                        <button onclick="deleteLog(${log.id})" class="btn btn-sm btn-link text-danger text-decoration-none">삭제</button>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    function deleteLog(id) {
+        if(confirm('이 기록을 삭제할까요?')) {
+            logs = logs.filter(l => l.id !== id);
+            saveAndRender();
+        }
+    }
+
+    // CSV 내보내기 (엑셀용 - 요일도 함께 저장되도록 업데이트)
+    function downloadCSV() {
+        let csv = "날짜,요일,구분,세부항목,제목,내용\n";
+        logs.forEach(l => {
+            const dayOfWeek = getKoreanDay(l.date);
+            csv += `${l.date},${dayOfWeek},${l.main},${l.sub},"${l.title}","${l.content.replace(/\n/g, ' ')}"\n`;
+        });
+        const blob = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "ministry_ledger.csv";
+        link.click();
+    }
+
+    // 초기 실행
+    window.onload = () => {
+        updateSubCat();
+        renderList();
+        
+        // 오늘 날짜를 기본값으로 설정
+        document.getElementById('date').value = new Date().toISOString().substring(0, 10);
+    };
+</script>
+
+</body>
+</html>
